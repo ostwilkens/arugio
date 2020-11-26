@@ -1,0 +1,21 @@
+[package]
+name = "arugio_server"
+version = "0.1.0"
+authors = ["ostwilkens <carl@ostwilkens.se>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+arugio_shared = { path = "../arugio_shared" }
+
+[dependencies.bevy]
+git = "https://github.com/bevyengine/bevy"
+rev = "01ba7c44255059f833c2b90d3d6b7ac7e9c025ca"
+default-features = false
+
+[dependencies.bevy_networking_turbulence]
+git = "https://github.com/ostwilkens/bevy_networking_turbulence"
+rev = "41145b318e71008b48cdcd8b40140bb88bef868d"
+default-features = false
+features = ["use-webrtc"]

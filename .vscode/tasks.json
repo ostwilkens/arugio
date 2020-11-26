@@ -1,0 +1,59 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "build client (release)",
+        "group": "build",
+        "type": "shell",
+        "command": "cargo build --release",
+        "options": { "cwd": "${workspaceFolder}/arugio_client" },
+        "problemMatcher": ["$rustc"]
+      },
+      {
+        "label": "build server (release)",
+        "group": "build",
+        "type": "shell",
+        "command": "cargo build --release",
+        "options": { "cwd": "${workspaceFolder}/arugio_server" },
+        "problemMatcher": ["$rustc"]
+      },
+      {
+        "label": "run server (release)",
+        "group": "build",
+        "type": "shell",
+        "command": "cargo run --release",
+        "options": { "cwd": "${workspaceFolder}/arugio_server" },
+        "problemMatcher": ["$rustc"]
+      },
+      {
+        "label": "bindgen client (release)",
+        "type": "shell",
+        "command": "wasm-bindgen --no-typescript --out-dir dist --target web ./target/wasm32-unknown-unknown/release/arugio_client.wasm",
+        "group": "build",
+        "dependsOn": ["build client (release)"],
+        "problemMatcher": []
+      },
+      {
+        "label": "deploy index.html",
+        "type": "shell",
+        "command": "cp \"${workspaceFolder}/arugio_client/src/index.html\" \"${workspaceFolder}/dist/index.html\"",
+        "group": "build",
+        "problemMatcher": []
+      },
+      {
+        "label": "deploy client (release)",
+        "dependsOn": ["bindgen client (release)", "deploy index.html"],
+        "dependsOrder": "sequence",
+        "group": "build",
+        "problemMatcher": []
+      },
+      {
+        "label": "host client",
+        "type": "shell",
+        "command": "basic-http-server dist",
+        "group": "build",
+        "problemMatcher": []
+      }
+    ]
+  }
+  
