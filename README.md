@@ -30,3 +30,5 @@ wasm-bindgen --no-typescript --out-dir dist --target web ./target/wasm32-unknown
 cp arugio_client/src/index.html dist/index.html
 basic-http-server dist
 ```
+
+![client screenshot](screen.png)
