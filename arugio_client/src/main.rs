@@ -2,6 +2,7 @@ use arugio_shared::{ClientMessage, ServerMessage};
 use bevy::prelude::*;
 use bevy_networking_turbulence::{NetworkEvent, NetworkResource, NetworkingPlugin};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use bevy_web_fullscreen::FullViewportPlugin;
 
 fn main() {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -10,15 +11,13 @@ fn main() {
     App::build()
         .add_plugins(bevy_webgl2::DefaultPlugins)
         .add_plugin(NetworkingPlugin)
+        .add_plugin(FullViewportPlugin)
         .add_resource(EventReader::<NetworkEvent>::default())
-        .add_resource(Events::<ViewportResized>::default())
         .add_startup_system(arugio_shared::network_channels_setup)
         .add_startup_system(setup_world_system)
         .add_startup_system(client_setup_system)
-        .add_startup_system(setup_viewport_resize_system)
         .add_system(handle_network_events_system)
         .add_system(keyboard_input_system)
-        .add_system(viewport_resize_system)
         .add_system_to_stage(stage::PRE_UPDATE, read_network_channels_system)
         .run();
 }
@@ -51,59 +50,6 @@ fn client_setup_system(mut net: ResMut<NetworkResource>) {
     let socket_address = SocketAddr::new(ip_address, 9001);
     info!("Connecting to {}...", socket_address);
     net.connect(socket_address);
-}
-
-pub struct ViewportResized {
-    pub width: u32,
-    pub height: u32,
-}
-
-impl From<(u32, u32)> for ViewportResized {
-    fn from(size: (u32, u32)) -> Self {
-        ViewportResized {
-            width: size.0,
-            height: size.1,
-        }
-    }
-}
-
-fn get_viewport_size() -> (u32, u32) {
-    let document_element = web_sys::window()
-        .expect("could not get window")
-        .document()
-        .expect("could not get document")
-        .document_element()
-        .expect("could not get document element");
-
-    let width = document_element.client_width() as u32;
-    let height = document_element.client_height() as u32;
-
-    (width, height)
-}
-
-fn setup_viewport_resize_system(
-    mut viewport_resized_events: ResMut<'static, Events<ViewportResized>>,
-) {
-    let window = web_sys::window().expect("could not get web window");
-
-    viewport_resized_events.send(get_viewport_size().into());
-
-    gloo_events::EventListener::new(&window, "resize", move |_event| {
-        viewport_resized_events.send(get_viewport_size().into());
-    })
-    .forget();
-}
-
-fn viewport_resize_system(
-    mut windows: ResMut<Windows>,
-    viewport_resized_events: ResMut<Events<ViewportResized>>,
-    mut viewport_resized_event_reader: Local<EventReader<ViewportResized>>,
-) {
-    for event in viewport_resized_event_reader.iter(&viewport_resized_events) {
-        if let Some(window) = windows.get_primary_mut() {
-            window.set_resolution(event.width, event.height);
-        }
-    }
 }
 
 fn keyboard_input_system(keyboard_input: Res<Input<KeyCode>>) {
