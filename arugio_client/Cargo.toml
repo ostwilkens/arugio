@@ -12,6 +12,8 @@ bevy_webgl2 = { git = "https://github.com/mrk-its/bevy_webgl2", rev = "a724cdf6b
 console_log = "0.2"
 log = "0.4"
 console_error_panic_hook = "0.1.6"
+gloo-events = "0.1.1"
+web-sys = "0.3.45"
 
 [dependencies.bevy]
 git = "https://github.com/bevyengine/bevy"
