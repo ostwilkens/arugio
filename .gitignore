@@ -1,3 +1,5 @@
-/target
-/dist
+target/
 Cargo.lock
+dist/*
+!dist/index.html
+!dist/assets

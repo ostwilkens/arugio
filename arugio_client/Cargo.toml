@@ -15,6 +15,7 @@ console_error_panic_hook = "0.1.6"
 gloo-events = "0.1.1"
 web-sys = "0.3.45"
 bevy_web_fullscreen = { git = "https://github.com/ostwilkens/bevy_web_fullscreen.git" }
+turbulence = "0.3"
 
 [dependencies.bevy]
 git = "https://github.com/bevyengine/bevy"

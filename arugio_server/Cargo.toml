@@ -8,6 +8,9 @@ edition = "2018"
 
 [dependencies]
 arugio_shared = { path = "../arugio_shared" }
+rand = "0.7.3"
+serde = { version = "1.0.117", features = ["derive"] }
+turbulence = "0.3"
 
 [dependencies.bevy]
 git = "https://github.com/bevyengine/bevy"
