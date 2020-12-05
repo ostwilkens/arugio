@@ -102,7 +102,7 @@ pub struct Velocity(pub Vec2);
 pub struct TargetVelocity(pub Vec2);
 
 pub fn update_velocity_system(mut query: Query<(&mut Velocity, &TargetVelocity)>, time: Res<Time>) {
-    let delta = time.delta_seconds;
+    let delta = time.delta_seconds();
     let speed = 2.0;
 
     for (mut velocity, target_velocity) in query.iter_mut() {
@@ -112,7 +112,7 @@ pub fn update_velocity_system(mut query: Query<(&mut Velocity, &TargetVelocity)>
 
 pub fn update_position_system(mut query: Query<(&mut Position, &Velocity)>, time: Res<Time>) {
     for (mut pos, vel) in query.iter_mut() {
-        pos.0 += vel.0 * time.delta_seconds * 15.0;
+        pos.0 += vel.0 * time.delta_seconds() * 15.0;
     }
 }
 

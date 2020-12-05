@@ -11,11 +11,11 @@ serde = { version = "1.0.117", features = ["derive"] }
 
 [dependencies.bevy]
 git = "https://github.com/bevyengine/bevy"
-rev = "01ba7c44255059f833c2b90d3d6b7ac7e9c025ca"
+rev = "1398d7833007e85198cfd35d5fabc70b51b4db31"
 default-features = false
 
 [dependencies.bevy_networking_turbulence]
 git = "https://github.com/ostwilkens/bevy_networking_turbulence"
-rev = "41145b318e71008b48cdcd8b40140bb88bef868d"
+rev = "4747a9762e5e040ee66493bd52456b49aa244321"
 default-features = false
 features = ["use-webrtc"]
