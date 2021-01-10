@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 arugio_shared = { path = "../arugio_shared" }
-bevy_webgl2 = { git = "https://github.com/mrk-its/bevy_webgl2", rev = "8421bfaccd70ca344317fc4807c4b0efd6a74763" }
+bevy_webgl2 = { git = "https://github.com/mrk-its/bevy_webgl2", rev = "dd2ec692d4ec836eb99fe9f0a8d439417cf73201" }
 console_log = "0.2"
 log = "0.4"
 console_error_panic_hook = "0.1.6"
@@ -16,15 +16,5 @@ gloo-events = "0.1.1"
 web-sys = "0.3.45"
 bevy_web_fullscreen = { git = "https://github.com/ostwilkens/bevy_web_fullscreen.git" }
 turbulence = "0.3"
-
-[dependencies.bevy]
-git = "https://github.com/bevyengine/bevy"
-rev = "1398d7833007e85198cfd35d5fabc70b51b4db31"
-default-features = false
-features = ["render"]
-
-[dependencies.bevy_networking_turbulence]
-git = "https://github.com/ostwilkens/bevy_networking_turbulence"
-rev = "4747a9762e5e040ee66493bd52456b49aa244321"
-default-features = false
-features = ["use-webrtc"]
+bevy_networking_turbulence = { version = "0.1.0", default-features = false, features = ["use-webrtc"] }
+bevy = { version = "0.4.0", default-features = false, features = ["render"] }

@@ -8,14 +8,5 @@ edition = "2018"
 
 [dependencies]
 serde = { version = "1.0.117", features = ["derive"] }
-
-[dependencies.bevy]
-git = "https://github.com/bevyengine/bevy"
-rev = "1398d7833007e85198cfd35d5fabc70b51b4db31"
-default-features = false
-
-[dependencies.bevy_networking_turbulence]
-git = "https://github.com/ostwilkens/bevy_networking_turbulence"
-rev = "4747a9762e5e040ee66493bd52456b49aa244321"
-default-features = false
-features = ["use-webrtc"]
+bevy_networking_turbulence = { version = "0.1.0", default-features = false, features = ["use-webrtc"] }
+bevy = { version = "0.4.0", default-features = false }

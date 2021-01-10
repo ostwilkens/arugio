@@ -22,20 +22,23 @@ fn main() {
         .add_plugins(MinimalPlugins)
         .add_plugin(NetworkingPlugin)
         .add_resource(EventReader::<NetworkEvent>::default())
-        .add_startup_system(arugio_shared::network_channels_setup)
-        .add_startup_system(server_setup_system)
-        .add_system(handle_network_events_system)
-        .add_system(arugio_shared::update_velocity_system)
-        .add_system(arugio_shared::update_position_system)
-        .add_system(spawn_ball_system)
-        .add_system(unowned_ball_input_system)
-        .add_system_to_stage(stage::PRE_UPDATE, read_component_channel_system::<Position>)
+        .add_startup_system(arugio_shared::network_channels_setup.system())
+        .add_startup_system(server_setup_system.system())
+        .add_system(handle_network_events_system.system())
+        .add_system(arugio_shared::update_velocity_system.system())
+        .add_system(arugio_shared::update_position_system.system())
+        .add_system(spawn_ball_system.system())
+        .add_system(unowned_ball_input_system.system())
         .add_system_to_stage(
             stage::PRE_UPDATE,
-            read_component_channel_system::<TargetVelocity>,
+            read_component_channel_system::<Position>.system(),
         )
-        .add_system_to_stage(stage::PRE_UPDATE, read_network_channels_system)
-        .add_system_to_stage(stage::POST_UPDATE, broadcast_changes_system)
+        .add_system_to_stage(
+            stage::PRE_UPDATE,
+            read_component_channel_system::<TargetVelocity>.system(),
+        )
+        .add_system_to_stage(stage::PRE_UPDATE, read_network_channels_system.system())
+        .add_system_to_stage(stage::POST_UPDATE, broadcast_changes_system.system())
         .run();
 }
 

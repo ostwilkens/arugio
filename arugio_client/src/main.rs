@@ -22,24 +22,30 @@ fn main() {
         .add_plugin(NetworkingPlugin)
         .add_plugin(FullViewportPlugin)
         .add_resource(EventReader::<NetworkEvent>::default())
-        .add_startup_system(arugio_shared::network_channels_setup)
-        .add_startup_system(setup_world_system)
-        .add_startup_system(client_setup_system)
-        .add_system(add_ball_mesh_system)
-        .add_system(handle_network_events_system)
-        .add_system(keyboard_input_system)
-        .add_system(handle_pointer_target_system)
-        .add_system(arugio_shared::update_velocity_system)
-        .add_system(arugio_shared::update_position_system)
-        .add_system(update_ball_translation_system)
-        .add_system(update_camera_translation_system)
-        .add_system_to_stage(stage::PRE_UPDATE, read_component_channel_system::<Position>)
+        .add_startup_system(arugio_shared::network_channels_setup.system())
+        .add_startup_system(setup_world_system.system())
+        .add_startup_system(client_setup_system.system())
+        .add_system(add_ball_mesh_system.system())
+        .add_system(handle_network_events_system.system())
+        .add_system(keyboard_input_system.system())
+        .add_system(handle_pointer_target_system.system())
+        .add_system(arugio_shared::update_velocity_system.system())
+        .add_system(arugio_shared::update_position_system.system())
+        .add_system(update_ball_translation_system.system())
+        .add_system(update_camera_translation_system.system())
         .add_system_to_stage(
             stage::PRE_UPDATE,
-            read_component_channel_system::<TargetVelocity>,
+            read_component_channel_system::<Position>.system(),
         )
-        .add_system_to_stage(stage::PRE_UPDATE, read_server_message_channel_system)
-        .add_system_to_stage(stage::POST_UPDATE, broadcast_local_changes_system)
+        .add_system_to_stage(
+            stage::PRE_UPDATE,
+            read_component_channel_system::<TargetVelocity>.system(),
+        )
+        .add_system_to_stage(
+            stage::PRE_UPDATE,
+            read_server_message_channel_system.system(),
+        )
+        .add_system_to_stage(stage::POST_UPDATE, broadcast_local_changes_system.system())
         .run();
 }
 
