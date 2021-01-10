@@ -9,9 +9,6 @@ made possible with
  and 
 [smokku/bevy_networking_turbulence](https://github.com/smokku/bevy_networking_turbulence)
 
-## todo
-game
-
 ## requirements
 `cargo install wasm-bindgen-cli`
 
