@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 arugio_shared = { path = "../arugio_shared" }
-bevy_webgl2 = { git = "https://github.com/mrk-its/bevy_webgl2", rev = "dd2ec692d4ec836eb99fe9f0a8d439417cf73201" }
+bevy_webgl2 = "0.4.2"
 console_log = "0.2"
 log = "0.4"
 console_error_panic_hook = "0.1.6"
