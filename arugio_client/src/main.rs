@@ -19,7 +19,7 @@ fn main() {
 
     App::build()
         .add_plugins(bevy_webgl2::DefaultPlugins)
-        .add_plugin(NetworkingPlugin)
+        .add_plugin(NetworkingPlugin::default())
         .add_plugin(FullViewportPlugin)
         .add_resource(EventReader::<NetworkEvent>::default())
         .add_startup_system(arugio_shared::network_channels_setup.system())
