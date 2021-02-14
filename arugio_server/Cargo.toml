@@ -11,5 +11,5 @@ arugio_shared = { path = "../arugio_shared" }
 rand = "0.8.1"
 serde = { version = "1.0.117", features = ["derive"] }
 turbulence = "0.3"
-bevy_networking_turbulence = { version = "0.1.0", default-features = false, features = ["use-webrtc"] }
+bevy_networking_turbulence = { version = "0.2.0", default-features = false, features = ["use-webrtc"] }
 bevy = { version = "0.4.0", default-features = false }

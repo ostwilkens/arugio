@@ -20,7 +20,7 @@ fn main() {
             1000 / 30,
         )))
         .add_plugins(MinimalPlugins)
-        .add_plugin(NetworkingPlugin)
+        .add_plugin(NetworkingPlugin::default())
         .add_resource(EventReader::<NetworkEvent>::default())
         .add_startup_system(arugio_shared::network_channels_setup.system())
         .add_startup_system(server_setup_system.system())
