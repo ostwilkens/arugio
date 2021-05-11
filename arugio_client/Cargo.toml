@@ -8,14 +8,14 @@ edition = "2018"
 
 [dependencies]
 arugio_shared = { path = "../arugio_shared" }
-bevy_webgl2 = "0.4.3"
+bevy_webgl2 = "0.5.2"
 console_log = "0.2"
-log = "0.4"
+log = "0.4.14"
 console_error_panic_hook = "0.1.6"
 gloo-events = "0.1.1"
 web-sys = "0.3.45"
-bevy_web_fullscreen = { git = "https://github.com/ostwilkens/bevy_web_fullscreen.git", rev = "2911bec1d9a787b159f3a343495452d913a9be2b" }
+bevy_web_fullscreen = { git = "https://github.com/ostwilkens/bevy_web_fullscreen.git" }
 turbulence = "0.3"
-bevy_networking_turbulence = { version = "0.2.0", default-features = false, features = ["use-webrtc"] }
-bevy = { version = "0.4.0", default-features = false, features = ["render"] }
-rand = { version = "0.7.3", features = ["wasm-bindgen"] } # patch feature into Bevy's dependency
+bevy_networking_turbulence = { version = "0.3.0", default-features = false, features = ["use-webrtc"] }
+bevy = { version = "0.5.0", default-features = false, features = ["render"] }
+rand = { version = "0.8.3" }

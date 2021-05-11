@@ -1,6 +1,6 @@
 use bevy::{
     core::Time,
-    ecs::Bundle,
+    ecs::bundle::Bundle,
     prelude::{Query, Res},
 };
 use bevy::{math::Vec2, prelude::ResMut};

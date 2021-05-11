@@ -16,12 +16,12 @@ struct NetworkHandle(u32);
 
 fn main() {
     App::build()
-        .add_resource(ScheduleRunnerSettings::run_loop(Duration::from_millis(
+        .insert_resource(ScheduleRunnerSettings::run_loop(Duration::from_millis(
             1000 / 30,
         )))
         .add_plugins(MinimalPlugins)
         .add_plugin(NetworkingPlugin::default())
-        .add_resource(EventReader::<NetworkEvent>::default())
+        // .insert_resource(EventReader::<NetworkEvent>::default())
         .add_startup_system(arugio_shared::network_channels_setup.system())
         .add_startup_system(server_setup_system.system())
         .add_system(handle_network_events_system.system())
@@ -30,22 +30,22 @@ fn main() {
         .add_system(spawn_ball_system.system())
         .add_system(unowned_ball_input_system.system())
         .add_system_to_stage(
-            stage::PRE_UPDATE,
+            CoreStage::PreUpdate,
             read_component_channel_system::<Position>.system(),
         )
         .add_system_to_stage(
-            stage::PRE_UPDATE,
+            CoreStage::PreUpdate,
             read_component_channel_system::<TargetVelocity>.system(),
         )
-        .add_system_to_stage(stage::PRE_UPDATE, read_network_channels_system.system())
-        .add_system_to_stage(stage::POST_UPDATE, broadcast_changes_system.system())
+        .add_system_to_stage(CoreStage::PreUpdate, read_network_channels_system.system())
+        .add_system_to_stage(CoreStage::PostUpdate, broadcast_changes_system.system())
         .run();
 }
 
 fn server_setup_system(mut net: ResMut<NetworkResource>) {
     let ip_address = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
     let socket_address = SocketAddr::new(ip_address, 9001);
-    net.listen(socket_address);
+    net.listen(socket_address, None, None);
     println!("Listening...");
 }
 
@@ -60,20 +60,19 @@ fn read_network_channels_system(mut net: ResMut<NetworkResource>) {
 }
 
 fn handle_network_events_system(
-    cmd: &mut Commands,
+    mut cmd: Commands,
     mut net: ResMut<NetworkResource>,
-    network_events: Res<Events<NetworkEvent>>,
-    mut network_event_reader: ResMut<EventReader<NetworkEvent>>,
+    mut network_event_reader: EventReader<NetworkEvent>,
     unowned_balls: Query<(Entity, &BallId), Without<NetworkHandle>>,
 ) {
-    for event in network_event_reader.iter(&network_events) {
+    for event in network_event_reader.iter() {
         match event {
             NetworkEvent::Connected(handle) => match net.connections.get_mut(handle) {
                 Some(_connection) => {
                     println!("New connection handle: {:?}", &handle);
 
                     let (entity, ball) = unowned_balls.iter().next().expect("No unowned balls");
-                    cmd.insert_one(entity, NetworkHandle(*handle));
+                    cmd.entity(entity).insert(NetworkHandle(*handle));
                     net.send_message(*handle, ServerMessage::Welcome(*ball))
                         .expect("Could not send welcome");
                 }
@@ -84,7 +83,7 @@ fn handle_network_events_system(
     }
 }
 
-fn spawn_ball_system(cmd: &mut Commands, unowned_balls: Query<&BallId, Without<NetworkHandle>>) {
+fn spawn_ball_system(mut cmd: Commands, unowned_balls: Query<&BallId, Without<NetworkHandle>>) {
     let mut count = 0;
     let mut highest_id = 0;
     for ball in unowned_balls.iter() {
@@ -93,7 +92,7 @@ fn spawn_ball_system(cmd: &mut Commands, unowned_balls: Query<&BallId, Without<N
     }
 
     if count < 3 {
-        cmd.spawn((
+        cmd.spawn_bundle((
             BallId(highest_id + 1),
             Position(vec2(
                 rand::random::<f32>() * 10.0 - 5.0,
@@ -131,7 +130,7 @@ fn broadcast_changes_system(
 }
 
 fn read_component_channel_system<C: ChannelMessage>(
-    cmd: &mut Commands,
+    mut cmd: Commands,
     mut net: ResMut<NetworkResource>,
     balls_query: Query<(&BallId, Entity)>,
 ) {
@@ -143,7 +142,8 @@ fn read_component_channel_system<C: ChannelMessage>(
         while let Some((ball_id, component)) = channels.recv::<(BallId, C)>() {
             match balls.get(&ball_id) {
                 Some(&entity) => {
-                    cmd.insert_one(entity, component);
+                    cmd.entity(entity).insert(component);
+                    // cmd.insert_one(entity, component);
                 }
                 None => (),
             }

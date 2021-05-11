@@ -1,7 +1,7 @@
 use arugio_shared::{
     BallBundle, BallId, ClientMessage, Position, ServerMessage, TargetVelocity, Velocity,
 };
-use bevy::{math::vec3, prelude::*, render::camera::Camera};
+use bevy::{math::vec3, prelude::*, render::camera::Camera, ecs::schedule::Stage};
 use bevy_networking_turbulence::{NetworkEvent, NetworkResource, NetworkingPlugin};
 use bevy_web_fullscreen::FullViewportPlugin;
 use std::{
@@ -21,7 +21,7 @@ fn main() {
         .add_plugins(bevy_webgl2::DefaultPlugins)
         .add_plugin(NetworkingPlugin::default())
         .add_plugin(FullViewportPlugin)
-        .add_resource(EventReader::<NetworkEvent>::default())
+        // .insert_resource(EventReader::<NetworkEvent>::default())
         .add_startup_system(arugio_shared::network_channels_setup.system())
         .add_startup_system(setup_world_system.system())
         .add_startup_system(client_setup_system.system())
@@ -32,48 +32,49 @@ fn main() {
         .add_system(arugio_shared::update_velocity_system.system())
         .add_system(arugio_shared::update_position_system.system())
         .add_system(update_ball_translation_system.system())
-        .add_system(update_camera_translation_system.system())
+        // .add_system(update_camera_translation_system.system())
         .add_system_to_stage(
-            stage::PRE_UPDATE,
+            CoreStage::PreUpdate,
             read_component_channel_system::<Position>.system(),
         )
         .add_system_to_stage(
-            stage::PRE_UPDATE,
+            CoreStage::PreUpdate,
             read_component_channel_system::<TargetVelocity>.system(),
         )
         .add_system_to_stage(
-            stage::PRE_UPDATE,
+            CoreStage::PreUpdate,
             read_server_message_channel_system.system(),
         )
-        .add_system_to_stage(stage::POST_UPDATE, broadcast_local_changes_system.system())
+        .add_system_to_stage(CoreStage::PostUpdate, broadcast_local_changes_system.system())
         .run();
 }
 
 fn setup_world_system(
-    cmd: &mut Commands,
+    mut cmd: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
     let map_material = StandardMaterial {
-        albedo: Color::rgb(0.15, 0.27, 0.33),
-        albedo_texture: Some(asset_server.load("noise.png")),
-        shaded: true,
+        base_color: Color::rgb(0.15, 0.27, 0.33),
+        // albedo_texture: Some(asset_server.load("noise.png")),
+        // shaded: true,
+        ..Default::default()
     };
 
-    cmd.spawn(PbrBundle {
+    cmd.spawn_bundle(PbrBundle {
         mesh: meshes.add(Mesh::from(shape::Plane { size: 200.0 })),
         material: materials.add(map_material),
         transform: Transform::from_rotation(Quat::from_rotation_x(PI * 0.5)),
         ..Default::default()
     })
-    .spawn(Camera3dBundle {
+    .insert_bundle(PerspectiveCameraBundle {
         transform: Transform::from_translation(Vec3::new(0.0, 0.0, 15.0))
             .looking_at(Vec3::default(), Vec3::unit_y()),
         ..Default::default()
     })
     .with_children(|parent| {
-        parent.spawn(LightBundle {
+        parent.spawn_bundle(LightBundle {
             transform: Transform::from_translation(Vec3::new(0.0, 0.0, -10.0)),
             ..Default::default()
         });
@@ -95,7 +96,7 @@ fn keyboard_input_system(keyboard_input: Res<Input<KeyCode>>) {
 }
 
 fn read_component_channel_system<C: ChannelMessage>(
-    cmd: &mut Commands,
+    mut cmd: Commands,
     mut net: ResMut<NetworkResource>,
     balls_query: Query<(&BallId, Entity, Option<&LocalPlayer>)>,
 ) {
@@ -111,10 +112,11 @@ fn read_component_channel_system<C: ChannelMessage>(
                     if local_player.is_some() {
                         continue;
                     }
-                    cmd.insert_one(*entity, component);
+
+                    cmd.entity(*entity).insert(component);
                 }
                 None => {
-                    cmd.spawn(BallBundle::new(ball_id)).with(component);
+                    cmd.spawn_bundle(BallBundle::new(ball_id)).insert(component);
                 }
             }
         }
@@ -122,7 +124,7 @@ fn read_component_channel_system<C: ChannelMessage>(
 }
 
 fn read_server_message_channel_system(
-    cmd: &mut Commands,
+    mut cmd: Commands,
     mut net: ResMut<NetworkResource>,
     balls: Query<(Entity, &BallId)>,
 ) {
@@ -139,10 +141,10 @@ fn read_server_message_channel_system(
 
                     match local_ball {
                         Some((entity, _)) => {
-                            cmd.insert_one(entity, LocalPlayer);
+                            cmd.entity(entity).insert(LocalPlayer);
                         }
                         None => {
-                            cmd.spawn(BallBundle::new(your_ball_id)).with(LocalPlayer);
+                            cmd.spawn_bundle(BallBundle::new(your_ball_id)).insert(LocalPlayer);
                         }
                     }
                 }
@@ -153,10 +155,9 @@ fn read_server_message_channel_system(
 
 fn handle_network_events_system(
     mut net: ResMut<NetworkResource>,
-    network_events: Res<Events<NetworkEvent>>,
-    mut network_event_reader: ResMut<EventReader<NetworkEvent>>,
+    mut network_event_reader: EventReader<NetworkEvent>,
 ) {
-    for event in network_event_reader.iter(&network_events) {
+    for event in network_event_reader.iter() {
         match event {
             NetworkEvent::Connected(handle) => match net.connections.get_mut(handle) {
                 Some(_connection) => {
@@ -173,11 +174,10 @@ fn handle_network_events_system(
 }
 
 fn handle_pointer_target_system(
-    cmd: &mut Commands,
+    mut cmd: Commands,
     windows: Res<Windows>,
     mouse_button_input: Res<Input<MouseButton>>,
-    cursor_moved_events: Res<Events<CursorMoved>>,
-    mut cursor_moved_event_reader: Local<EventReader<CursorMoved>>,
+    mut cursor_moved_event_reader: EventReader<CursorMoved>,
     local_players: Query<(Entity, &LocalPlayer, &TargetVelocity)>,
 ) {
     let local_player = local_players.iter().next();
@@ -185,7 +185,7 @@ fn handle_pointer_target_system(
     if let Some((player_entity, _, velocity)) = local_player {
         let mouse_down = mouse_button_input.pressed(MouseButton::Left);
 
-        for event in cursor_moved_event_reader.iter(&cursor_moved_events) {
+        for event in cursor_moved_event_reader.iter() {
             if mouse_down {
                 let window = windows.get_primary().unwrap();
                 let resolution = Vec2::new(window.width() as f32, window.height() as f32);
@@ -194,14 +194,12 @@ fn handle_pointer_target_system(
                 let power = 1.0 - (30.0 / offset.length()).min(1.0);
                 let normal = offset.normalize();
 
-                cmd.set_current_entity(player_entity);
-                cmd.with(TargetVelocity(normal * power));
+                cmd.entity(player_entity).insert(TargetVelocity(normal * power));
             }
         }
 
         if !mouse_down && velocity.0 != Vec2::zero() {
-            cmd.set_current_entity(player_entity);
-            cmd.with(TargetVelocity(Vec2::zero()));
+            cmd.entity(player_entity).insert(TargetVelocity(Vec2::zero()));
         }
     }
 }
@@ -254,14 +252,13 @@ fn broadcast_local_changes_system(
 }
 
 fn add_ball_mesh_system(
-    cmd: &mut Commands,
+    mut cmd: Commands,
     balls_without_mesh: Query<(Entity, &BallId), Without<Handle<Mesh>>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (entity, _) in balls_without_mesh.iter() {
-        cmd.insert(
-            entity,
+        cmd.entity(entity).insert_bundle(
             PbrBundle {
                 mesh: meshes.add(Mesh::from(shape::Icosphere {
                     radius: 0.5,
