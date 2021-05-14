@@ -1,7 +1,7 @@
 use arugio_shared::{
     BallBundle, BallId, ClientMessage, Position, ServerMessage, TargetVelocity, Velocity,
 };
-use bevy::{math::vec3, prelude::*, render::camera::Camera, ecs::schedule::Stage};
+use bevy::{math::vec3, prelude::*, render::camera::Camera};
 use bevy_networking_turbulence::{NetworkEvent, NetworkResource, NetworkingPlugin};
 use bevy_web_fullscreen::FullViewportPlugin;
 use std::{
@@ -21,7 +21,6 @@ fn main() {
         .add_plugins(bevy_webgl2::DefaultPlugins)
         .add_plugin(NetworkingPlugin::default())
         .add_plugin(FullViewportPlugin)
-        // .insert_resource(EventReader::<NetworkEvent>::default())
         .add_startup_system(arugio_shared::network_channels_setup.system())
         .add_startup_system(setup_world_system.system())
         .add_startup_system(client_setup_system.system())
@@ -32,7 +31,7 @@ fn main() {
         .add_system(arugio_shared::update_velocity_system.system())
         .add_system(arugio_shared::update_position_system.system())
         .add_system(update_ball_translation_system.system())
-        // .add_system(update_camera_translation_system.system())
+        .add_system(update_camera_translation_system.system())
         .add_system_to_stage(
             CoreStage::PreUpdate,
             read_component_channel_system::<Position>.system(),
@@ -45,7 +44,10 @@ fn main() {
             CoreStage::PreUpdate,
             read_server_message_channel_system.system(),
         )
-        .add_system_to_stage(CoreStage::PostUpdate, broadcast_local_changes_system.system())
+        .add_system_to_stage(
+            CoreStage::PostUpdate,
+            broadcast_local_changes_system.system(),
+        )
         .run();
 }
 
@@ -57,8 +59,7 @@ fn setup_world_system(
 ) {
     let map_material = StandardMaterial {
         base_color: Color::rgb(0.15, 0.27, 0.33),
-        // albedo_texture: Some(asset_server.load("noise.png")),
-        // shaded: true,
+        base_color_texture: Some(asset_server.load("noise.png")),
         ..Default::default()
     };
 
@@ -67,10 +68,11 @@ fn setup_world_system(
         material: materials.add(map_material),
         transform: Transform::from_rotation(Quat::from_rotation_x(PI * 0.5)),
         ..Default::default()
-    })
-    .insert_bundle(PerspectiveCameraBundle {
+    });
+
+    cmd.spawn_bundle(PerspectiveCameraBundle {
         transform: Transform::from_translation(Vec3::new(0.0, 0.0, 15.0))
-            .looking_at(Vec3::default(), Vec3::unit_y()),
+            .looking_at(Vec3::default(), Vec3::Y),
         ..Default::default()
     })
     .with_children(|parent| {
@@ -144,7 +146,8 @@ fn read_server_message_channel_system(
                             cmd.entity(entity).insert(LocalPlayer);
                         }
                         None => {
-                            cmd.spawn_bundle(BallBundle::new(your_ball_id)).insert(LocalPlayer);
+                            cmd.spawn_bundle(BallBundle::new(your_ball_id))
+                                .insert(LocalPlayer);
                         }
                     }
                 }
@@ -194,12 +197,13 @@ fn handle_pointer_target_system(
                 let power = 1.0 - (30.0 / offset.length()).min(1.0);
                 let normal = offset.normalize();
 
-                cmd.entity(player_entity).insert(TargetVelocity(normal * power));
+                cmd.entity(player_entity)
+                    .insert(TargetVelocity(normal * power));
             }
         }
 
-        if !mouse_down && velocity.0 != Vec2::zero() {
-            cmd.entity(player_entity).insert(TargetVelocity(Vec2::zero()));
+        if !mouse_down && velocity.0 != Vec2::ZERO {
+            cmd.entity(player_entity).insert(TargetVelocity(Vec2::ZERO));
         }
     }
 }
@@ -215,22 +219,22 @@ fn update_ball_translation_system(mut balls: Query<(&Position, &mut Transform)>)
 
 fn update_camera_translation_system(
     local_players: Query<(&LocalPlayer, &Transform, &Velocity)>,
-    mut cameras: Query<(&Camera, &mut Transform)>,
+    mut cameras: Query<(&Camera, &mut Transform, Without<LocalPlayer>)>,
 ) {
     let local_player = local_players.iter().next();
 
     if let Some((_, local_player_transform, velocity)) = local_player {
-        for (_, mut camera_transform) in cameras.iter_mut() {
-            camera_transform.translation.x = local_player_transform.translation.x - velocity.0.x;
-            camera_transform.translation.y = local_player_transform.translation.y - velocity.0.y;
-            camera_transform.translation.z = 15.0 - velocity.0.length() * 4.0;
-            let lookat = vec3(
-                local_player_transform.translation.x + velocity.0.x,
-                local_player_transform.translation.y + velocity.0.y,
-                2.0,
-            );
-            camera_transform.look_at(lookat, Vec3::unit_y());
-        }
+        let (_, mut camera_transform, _) = cameras.single_mut().unwrap();
+
+        camera_transform.translation.x = local_player_transform.translation.x - velocity.0.x;
+        camera_transform.translation.y = local_player_transform.translation.y - velocity.0.y;
+        camera_transform.translation.z = 15.0 - velocity.0.length() * 4.0;
+        let lookat = vec3(
+            local_player_transform.translation.x + velocity.0.x,
+            local_player_transform.translation.y + velocity.0.y,
+            2.0,
+        );
+        camera_transform.look_at(lookat, Vec3::Y);
     }
 }
 
@@ -258,15 +262,13 @@ fn add_ball_mesh_system(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (entity, _) in balls_without_mesh.iter() {
-        cmd.entity(entity).insert_bundle(
-            PbrBundle {
-                mesh: meshes.add(Mesh::from(shape::Icosphere {
-                    radius: 0.5,
-                    subdivisions: 0,
-                })),
-                material: materials.add(Color::rgb(0.91, 0.44, 0.32).into()),
-                ..Default::default()
-            },
-        );
+        cmd.entity(entity).insert_bundle(PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Icosphere {
+                radius: 0.5,
+                subdivisions: 0,
+            })),
+            material: materials.add(Color::rgb(0.91, 0.44, 0.32).into()),
+            ..Default::default()
+        });
     }
 }
