@@ -10,7 +10,7 @@ made possible with
 [smokku/bevy_networking_turbulence](https://github.com/smokku/bevy_networking_turbulence)
 
 ## requirements
-`cargo install wasm-bindgen-cli`
+`cargo install --version 0.2.69 -f wasm-bindgen-cli`
 
 `cargo install basic-http-server`
 
