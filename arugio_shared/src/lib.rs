@@ -1,7 +1,7 @@
 use bevy::{
     core::Time,
     ecs::bundle::Bundle,
-    prelude::{Query, Res},
+    prelude::{Component, Query, Res},
 };
 use bevy::{math::Vec2, prelude::ResMut};
 use bevy_networking_turbulence::{
@@ -72,7 +72,7 @@ pub enum ServerMessage {
     Welcome(BallId),
 }
 
-pub fn network_channels_setup(mut net: ResMut<NetworkResource>) {
+pub fn setup_network_channels(mut net: ResMut<NetworkResource>) {
     net.set_channels_builder(|builder: &mut ConnectionChannelsBuilder| {
         builder
             .register::<ClientMessage>(CLIENT_MESSAGE_SETTINGS)
@@ -92,16 +92,16 @@ pub fn network_channels_setup(mut net: ResMut<NetworkResource>) {
     });
 }
 
-#[derive(Serialize, Deserialize, Default, Clone, Copy, Debug, PartialEq, Hash, Eq)]
+#[derive(Component, Serialize, Deserialize, Default, Clone, Copy, Debug, PartialEq, Hash, Eq)]
 pub struct BallId(pub u32);
-#[derive(Serialize, Deserialize, Default, Clone, Copy, Debug)]
+#[derive(Component, Serialize, Deserialize, Default, Clone, Copy, Debug)]
 pub struct Position(pub Vec2);
-#[derive(Serialize, Deserialize, Default, Clone, Debug)]
+#[derive(Component, Serialize, Deserialize, Default, Clone, Debug)]
 pub struct Velocity(pub Vec2);
-#[derive(Serialize, Deserialize, Default, Clone, Copy, Debug)]
+#[derive(Component, Serialize, Deserialize, Default, Clone, Copy, Debug)]
 pub struct TargetVelocity(pub Vec2);
 
-pub fn update_velocity_system(mut query: Query<(&mut Velocity, &TargetVelocity)>, time: Res<Time>) {
+pub fn update_velocity(mut query: Query<(&mut Velocity, &TargetVelocity)>, time: Res<Time>) {
     let delta = time.delta_seconds();
     let speed = 2.0;
 
@@ -110,7 +110,7 @@ pub fn update_velocity_system(mut query: Query<(&mut Velocity, &TargetVelocity)>
     }
 }
 
-pub fn update_position_system(mut query: Query<(&mut Position, &Velocity)>, time: Res<Time>) {
+pub fn update_position(mut query: Query<(&mut Position, &Velocity)>, time: Res<Time>) {
     for (mut pos, vel) in query.iter_mut() {
         pos.0 += vel.0 * time.delta_seconds() * 15.0;
     }

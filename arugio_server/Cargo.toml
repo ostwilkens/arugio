@@ -2,7 +2,7 @@
 name = "arugio_server"
 version = "0.1.0"
 authors = ["ostwilkens <carl@ostwilkens.se>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,5 +11,5 @@ arugio_shared = { path = "../arugio_shared" }
 rand = "0.8.3"
 serde = { version = "1.0.125", features = ["derive"] }
 turbulence = "0.3"
-bevy_networking_turbulence = { version = "0.3.0", default-features = false, features = ["use-webrtc"] }
-bevy = { version = "0.5.0", default-features = false }
+bevy_networking_turbulence = { version = "0.4.1", default-features = false, features = ["use-webrtc"] }
+bevy = { version = "0.6.0", default-features = false }

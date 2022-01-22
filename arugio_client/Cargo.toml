@@ -2,20 +2,19 @@
 name = "arugio_client"
 version = "0.1.0"
 authors = ["ostwilkens <carl@ostwilkens.se>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 arugio_shared = { path = "../arugio_shared" }
-bevy_webgl2 = "0.5.2"
 console_log = "0.2"
 log = "0.4.14"
 console_error_panic_hook = "0.1.6"
 gloo-events = "0.1.1"
 web-sys = "0.3.45"
-bevy_web_fullscreen = { git = "https://github.com/ostwilkens/bevy_web_fullscreen.git" }
+bevy_web_fullscreen = { git = "https://github.com/ostwilkens/bevy_web_fullscreen.git", rev="08f3fc5e46ebb3aed1ce6483a2559ee65c9f7d76" }
 turbulence = "0.3"
-bevy_networking_turbulence = { version = "0.3.0", default-features = false, features = ["use-webrtc"] }
-bevy = { version = "0.5.0", default-features = false, features = ["render"] }
+bevy_networking_turbulence = { version = "0.4.1", default-features = false, features = ["use-webrtc"] }
+bevy = { version = "0.6.0", default-features = false, features = ["render", "bevy_winit", "png"] }
 rand = { version = "0.8.3" }

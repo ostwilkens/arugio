@@ -2,7 +2,7 @@ use arugio_shared::{BallId, ClientMessage, Position, ServerMessage, TargetVeloci
 use bevy::{
     app::ScheduleRunnerSettings,
     prelude::App,
-    prelude::{EventReader, ResMut},
+    prelude::{Component, EventReader, ResMut},
     MinimalPlugins,
 };
 use bevy::{math::vec2, prelude::*};
@@ -11,45 +11,41 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, net::IpAddr, net::Ipv4Addr, net::SocketAddr, time::Duration};
 use turbulence::message_channels::ChannelMessage;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Component, Serialize, Deserialize)]
 struct NetworkHandle(u32);
 
 fn main() {
-    App::build()
+    App::new()
         .insert_resource(ScheduleRunnerSettings::run_loop(Duration::from_millis(
             1000 / 30,
         )))
         .add_plugins(MinimalPlugins)
         .add_plugin(NetworkingPlugin::default())
-        // .insert_resource(EventReader::<NetworkEvent>::default())
-        .add_startup_system(arugio_shared::network_channels_setup.system())
-        .add_startup_system(server_setup_system.system())
-        .add_system(handle_network_events_system.system())
-        .add_system(arugio_shared::update_velocity_system.system())
-        .add_system(arugio_shared::update_position_system.system())
-        .add_system(spawn_ball_system.system())
-        .add_system(unowned_ball_input_system.system())
+        .add_startup_system(arugio_shared::setup_network_channels)
+        .add_startup_system(setup_server)
+        .add_system(network_events)
+        .add_system(arugio_shared::update_velocity)
+        .add_system(arugio_shared::update_position)
+        .add_system(spawn_ball_system)
+        .add_system(unowned_ball_input)
+        .add_system_to_stage(CoreStage::PreUpdate, read_component_channel::<Position>)
         .add_system_to_stage(
             CoreStage::PreUpdate,
-            read_component_channel_system::<Position>.system(),
+            read_component_channel::<TargetVelocity>,
         )
-        .add_system_to_stage(
-            CoreStage::PreUpdate,
-            read_component_channel_system::<TargetVelocity>.system(),
-        )
-        .add_system_to_stage(CoreStage::PreUpdate, read_network_channels_system.system())
-        .add_system_to_stage(CoreStage::PostUpdate, broadcast_changes_system.system())
+        .add_system_to_stage(CoreStage::PreUpdate, read_network_channels)
+        .add_system_to_stage(CoreStage::PostUpdate, broadcast_changes)
         .run();
 }
 
-fn server_setup_system(mut net: ResMut<NetworkResource>) {
+fn setup_server(mut net: ResMut<NetworkResource>) {
     let ip_address = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
     let socket_address = SocketAddr::new(ip_address, 9001);
     net.listen(socket_address, None, None);
     println!("Listening...");
 }
 
-fn read_network_channels_system(mut net: ResMut<NetworkResource>) {
+fn read_network_channels(mut net: ResMut<NetworkResource>) {
     for (_, connection) in net.connections.iter_mut() {
         let channels = connection.channels().unwrap();
 
@@ -59,7 +55,7 @@ fn read_network_channels_system(mut net: ResMut<NetworkResource>) {
     }
 }
 
-fn handle_network_events_system(
+fn network_events(
     mut cmd: Commands,
     mut net: ResMut<NetworkResource>,
     mut network_event_reader: EventReader<NetworkEvent>,
@@ -106,7 +102,7 @@ fn spawn_ball_system(mut cmd: Commands, unowned_balls: Query<&BallId, Without<Ne
     }
 }
 
-fn unowned_ball_input_system(
+fn unowned_ball_input(
     mut unowned_balls: Query<(&BallId, &mut TargetVelocity), Without<NetworkHandle>>,
 ) {
     for (_, mut target_velocity) in unowned_balls.iter_mut() {
@@ -115,7 +111,7 @@ fn unowned_ball_input_system(
     }
 }
 
-fn broadcast_changes_system(
+fn broadcast_changes(
     mut net: ResMut<NetworkResource>,
     changed_target_velocities: Query<(&BallId, &TargetVelocity), Changed<TargetVelocity>>,
     changed_positions: Query<(&BallId, &Position), Changed<Position>>,
@@ -129,7 +125,7 @@ fn broadcast_changes_system(
     }
 }
 
-fn read_component_channel_system<C: ChannelMessage>(
+fn read_component_channel<C: Component + ChannelMessage>(
     mut cmd: Commands,
     mut net: ResMut<NetworkResource>,
     balls_query: Query<(&BallId, Entity)>,
@@ -143,7 +139,6 @@ fn read_component_channel_system<C: ChannelMessage>(
             match balls.get(&ball_id) {
                 Some(&entity) => {
                     cmd.entity(entity).insert(component);
-                    // cmd.insert_one(entity, component);
                 }
                 None => (),
             }
