@@ -1,3 +1,5 @@
+## ⚠️ this example is currently out of date. bevy_networking_turbulence is no longer maintained, so a rewrite with another network library is required. contributions welcome! 
+
 # arugio
 a bevy multiplayer browser game example
 
